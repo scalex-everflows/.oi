@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smartlinks Statistics</title>
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+    }
+
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header {
+      background: var(--card);
+      padding: 16px 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title { font-size: 1.4rem; font-weight: 600; }
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .date-group { display: flex; align-items: center; gap: 8px; }
+    input[type="date"] { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: var(--primary-dark); }
+    button.reset { background: #ef4444; }
+    button.reset:hover { background: #dc2626; }
+
+    .table-container {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { padding: 14px 16px; text-align: right; border-bottom: 1px solid var(--border); }
+    th:first-child, td:first-child { text-align: left; }
+    th { background: #f1f5f9; font-weight: 600; cursor: pointer; }
+    tr:hover { background: #f8fafc; }
+    .name { color: #2563eb; font-weight: 500; }
+    .earnings { color: #15803d; font-weight: 600; }
+    .empty { text-align: center; padding: 60px; color: var(--text-light); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="title">Smartlinks Statistics</div>
+    
+    <div class="controls">
+      <div class="date-group">
+        <label>From:</label>
+        <input type="date" id="startDate">
+      </div>
+      
+      <div class="date-group">
+        <label>To:</label>
+        <input type="date" id="endDate">
+      </div>
+
+      <button id="applyBtn">Apply</button>
+      <button class="reset" id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table id="statsTable">
+      <thead>
+        <tr>
+          <th data-sort="name">Name</th>
+          <th data-sort="country">Country</th>
+          <th data-sort="hits">Hits</th>
+          <th data-sort="uniques">Uniques</th>
+          <th data-sort="clicks">Clicks</th>
+          <th data-sort="conversions">Conversions</th>
+          <th data-sort="earnings">Earnings, $</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// Sample data — date string ফরম্যাটে রাখা হয়েছে (YYYY-MM-DD)
+const rawData = [
+  { name: "mmmx boss",         country: "Germany", hits: 236, uniques: 94,  clicks: 64, conversions: 6,  earnings: 25.28, date: "2026-02-03" },
+  { name: "BMW porlo ka",      country: "Germany", hits: 208, uniques: 49,  clicks: 41, conversions: 8,  earnings: 32.48, date: "2026-02-05" },
+  { name: "Snap Vasta Again",  country: "Germany", hits: 204, uniques: 133, clicks:112, conversions:19, earnings: 97.95, date: "2026-02-07" },
+  { name: "Sha 7stce_oooo",    country: "Germany", hits: 197, uniques: 70,  clicks: 61, conversions: 8,  earnings: 31.88, date: "2026-02-10" },
+  { name: "Bad Note11s",       country: "Germany", hits: 193, uniques: 73,  clicks: 54, conversions: 7,  earnings: 30.51, date: "2026-02-12" },
+  { name: "Spk Shamim Bro",    country: "Germany", hits: 180, uniques:118, clicks: 93, conversions:17, earnings: 74.36, date: "2026-02-14" },
+  { name: "Olvia 51",          country: "United States", hits:179, uniques:126, clicks:0, conversions:0, earnings:0.00, date: "2026-02-02" },
+  { name: "Bad hama1",         country: "Germany", hits: 177, uniques: 77,  clicks: 49, conversions: 6,  earnings: 31.18, date: "2026-02-18" },
+  { name: "Ap Shill X GF",     country: "Germany", hits: 175, uniques:100, clicks: 84, conversions:15, earnings: 69.83, date: "2026-02-20" },
+  { name: "Bad boy2",          country: "Germany", hits: 173, uniques: 82,  clicks: 59, conversions: 8,  earnings: 40.12, date: "2026-02-22" },
+  { name: "Rip King 69",       country: "France",  hits: 164, uniques: 65,  clicks: 46, conversions: 3,  earnings: 10.69, date: "2026-02-04" },
+  { name: "Bad_my-profile",    country: "Germany", hits: 163, uniques: 81,  clicks: 56, conversions: 6,  earnings: 32.63, date: "2026-02-25" },
+  { name: "Ap kobe porbe",     country: "France",  hits: 149, uniques: 65,  clicks: 42, conversions: 4,  earnings: 18.50, date: "2026-02-27" },
+  { name: "Rip King 69",       country: "Australia", hits:140, uniques:79, clicks:57, conversions:6, earnings: 22.40, date: "2026-02-28" },
+];
+
+// Elements
+const tableBody   = document.getElementById("tableBody");
+const applyBtn    = document.getElementById("applyBtn");
+const resetBtn    = document.getElementById("resetBtn");
+const startInput  = document.getElementById("startDate");
+const endInput    = document.getElementById("endDate");
+
+// Default date range (page load এ দেখাবে)
+startInput.value = "2026-02-01";
+endInput.value   = "2026-02-28";
+
+let sortColumn = "earnings";
+let sortDirection = "desc";
+
+// Table render function
+function renderTable(dataToShow) {
+  tableBody.innerHTML = "";
+
+  if (dataToShow.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="7" class="empty">No data in selected date range</td></tr>`;
+    return;
+  }
+
+  // Sorting
+  dataToShow.sort((a, b) => {
+    let valA = a[sortColumn] ?? 0;
+    let valB = b[sortColumn] ?? 0;
+
+    if (sortColumn === "name" || sortColumn === "country") {
+      valA = String(valA).toLowerCase();
+      valB = String(valB).toLowerCase();
+    }
+
+    if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+    if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  dataToShow.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="name">${row.name}</td>
+      <td>${row.country}</td>
+      <td>${row.hits}</td>
+      <td>${row.uniques}</td>
+      <td>${row.clicks}</td>
+      <td class="text-center">${row.conversions}</td>
+      <td class="earnings">${row.earnings?.toFixed(2) ?? "—"}</td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+// Filter & show data
+function applyFilter() {
+  const start = startInput.value ? new Date(startInput.value) : null;
+  const end   = endInput.value   ? new Date(endInput.value)   : null;
+
+  if (!start || !end) {
+    renderTable([...rawData]);
+    return;
+  }
+
+  // end date কে শেষ মুহূর্ত পর্যন্ত নেওয়ার জন্য
+  end.setHours(23,59,59,999);
+
+  const filtered = rawData.filter(item => {
+    const itemDate = new Date(item.date);
+    return itemDate >= start && itemDate <= end;
+  });
+
+  renderTable(filtered);
+}
+
+// Sorting click
+document.querySelectorAll("th[data-sort]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.sort;
+    if (sortColumn === col) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn = col;
+      sortDirection = "desc";
+    }
+    applyFilter();   // current filter এর উপরেই sort হবে
+  });
+});
+
+// Events
+applyBtn.addEventListener("click", applyFilter);
+
+resetBtn.addEventListener("click", () => {
+  startInput.value = "2026-02-01";
+  endInput.value   = "2026-02-28";
+  applyFilter();
+});
+
+// Page load এ default দেখাবে
+applyFilter();
+</script>
+
+</body>
+</html>

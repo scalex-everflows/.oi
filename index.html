@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCALEX Dashboard</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter for modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            overflow-x: hidden;
+        }
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            color: white;
+        }
+        .sidebar ul {
+            list-style: none;
+        }
+        .sidebar li {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .sidebar li i {
+            margin-right: 0.75rem;
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        .sidebar li:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .sidebar li.active {
+            background: rgba(99, 102, 241, 0.3);
+            color: #60a5fa;
+        }
+        /* Main content */
+        .main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+        }
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+        .stat-title {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+        li{
+           text-decoration: none;
+        }
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .stat-trend.up {
+            color: #10b981;
+        }
+        .stat-trend i {
+            font-size: 0.75rem;
+        }
+        /* Charts Section */
+        .charts-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.06);
+            margin-bottom: 2rem;
+        }
+        .charts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .charts-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        a{
+            text-decoration: none;
+            color: white;
+        }
+        .period-selector select {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+        /* Trending Generator */
+        .trending-panel {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+        .trending-panel .charts-section {
+            margin-bottom: 0;
+        }
+        @media (max-width: 1200px) {
+            .trending-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo"><img style="width: 210px;" src="https://3655.efuserassets.com/3655/assets/logo/4c03a808-dbbd-8101-72cd-7c08a4448206.svg" alt=""></div>
+            <ul>
+                <li class="active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </li>
+             <a style="" href="./report.html">
+                <li>
+                    <i class="fas fa-file-alt"></i>
+                     Conversion Reports
+                </li>
+                </a> 
+                <li>
+                    <a href="./statics.html"><i class="fas fa-chart-line"></i>
+                    Performance</a>
+                </li>
+                <li>
+                    <i class="fas fa-users"></i>
+                    Audience
+                </li>
+                <li>
+                    <i class="fas fa-cogs"></i>
+                    Assets
+                </li>
+                <li>
+              <a href="./pament.html">      <i class="fas fa-file-invoice-dollar"></i>
+                    Invoices
+                </li></a>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <h1>Dashboard</h1>
+                <div class="user-menu" id="P">
+                    <div class="user-avatar">JN</div>
+                    <div class="p">
+  <div class="l" id="l">
+    <h4 class="name" style="display: block;"> <span><i class="fa-solid fa-circle-user"></i></span> JULKAR NAYIM</h4>
+    <p class="eamil"> <span></span>     itzzjulkar@gmail.com</p>
+    <h3 class="st"> <span><i class="fa-solid fa-sun"></i></span> Settings</h3>
+    <h3 class="st"> <span><i class="fa-solid fa-arrow-right-from-bracket"></i></span>  Logout</h3>
+   
+  </div>
+</div>
+
+<style>
+  
+  #p{
+    position: fixed;
+    display: block;
+  }
+  .l{
+    width: 200px;
+    height: 200px;
+    background: rgba(75, 73, 73, 0.39);
+    padding-left: 30px;
+    padding-top: 30px;
+    border-radius: 20px;
+    position: absolute;
+    line-height: 35px;
+    z-index: 1;
+    right: 10px;
+    top: 80px;
+   
+  }
+  #P.remove{
+    display: block;
+  }
+
+</style>
+<script>
+     const id = document.querySelector(".")
+</script>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <div " class="stats-grid " >
+                <div class="stat-card">
+                    <div class="stat-title">Revenue</div>
+                    <div class="stat-value">$113</div>
+                    <div class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i>
+                        8%
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Conversions</div>
+                    <div class="stat-value">40</div>
+                    <div class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i>
+                        6%
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Cickas</div>
+                    <div class="stat-value">220</div>
+                    <div class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i>
+                        4%
+                    </div>
+                </div>
+                <div style="z-index: -1; class="stat-card">
+                    <div class="stat-title">Events</div>
+                    <div class="stat-value">70</div>
+                    <div class="stat-trend up">
+                        <i class="fas fa-arrow-up"></i>
+                        8%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trending Panel -->
+            <div class="trending-panel">
+                <!-- Main Chart -->
+                <div class="charts-section">
+                    <div class="charts-header">
+                        <div class="charts-title">Metrics - Last 30 days</div>
+                        <div class="period-selector">
+                            <select>
+                                <option>30 Days</option>
+                                <option>7 Days</option>
+                                <option>Today</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Trending Generator -->
+                <div class="charts-section">
+                    <div class="charts-header">
+                        <div class="charts-title">Trending Generator</div>
+                    </div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="trendingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Main Chart - Multi-line with area fill approximating the screenshot
+        const mainCtx = document.getElementById('mainChart').getContext('2d');
+        const mainChart = new Chart(mainCtx, {
+            type: 'line',
+            data: {
+                labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                datasets: [{
+                    label: 'Total',
+                    data: [1000, 1200, 1500, 1800, 2200, 2500, 2800],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0
+                }, {
+                    label: '',
+                    data: [800, 1000, 1300, 1600, 1900, 2200, 2500],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0
+                }, {
+                    label: '',
+                    data: [600, 800, 1100, 1400, 1700, 2000, 2300],
+                    borderColor: '#eab308',
+                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0
+                }, {
+                    label: '',
+                    data: [400, 600, 900, 1200, 1500, 1800, 2100],
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.05)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        grid: { color: '#f1f5f9' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: { 
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        // Trending Chart - Smaller similar style
+        const trendCtx = document.getElementById('trendingChart').getContext('2d');
+        const trendingChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Day 1', 'Day 7', 'Day 14', 'Day 21', 'Day 30'],
+                datasets: [{
+                    label: 'Trending',
+                    data: [500, 700, 950, 1200, 1500],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        grid: { color: '#f1f5f9' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: { 
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

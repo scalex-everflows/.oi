@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCALEX Reports - Conversion Report</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Flatpickr for calendar -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Chart.js if needed -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            overflow-x: hidden;
+        }
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* Sidebar - same as before */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            color: white;
+        }
+        .sidebar ul {
+            list-style: none;
+        }
+        .sidebar li {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .sidebar li i {
+            margin-right: 0.75rem;
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        .sidebar li:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .sidebar li.active {
+            background: rgba(99, 102, 241, 0.3);
+            color: #60a5fa;
+        }
+        /* Main */
+        .main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+        }
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .breadcrumb {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .breadcrumb a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        /* Top Bar */
+        .top-bar {
+            background: #0f172a;
+            color: white;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0.75rem;
+        }
+        .top-bar .title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        .top-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+        }
+        .call-btn {
+            background: #10b981;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            justify-content: center;
+        }
+        /* Filters */
+        .filters {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        li{
+            text-decoration: none;
+        }
+        .filter-group label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        input[type="date"], select {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+        /* Results Container */
+        .results {
+            display: none;
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .results.show {
+            display: block;
+        }
+        /* Heatmaps */
+        .heatmaps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 768px) {
+            .heatmaps {
+                grid-template-columns: 1fr;
+            }
+        }
+        .heatmap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .heatmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .month-label {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            max-width: 250px;
+        }
+        .day-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            position: relative;
+            cursor: pointer;
+        }
+        .day-cell.active {
+            background: #10b981;
+        }
+        .day-cell.medium {
+            background: #34d399;
+        }
+        .day-cell.high {
+            background: #059669;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748b;
+        }
+        .magic-wand {
+            font-size: 4rem;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+        /* Reports Table - for list view if needed */
+        .reports-table {
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .table-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        a{
+            text-decoration: none;
+            color: white;
+        
+        }
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status.ready {
+            background: #dcfce7;
+            color: #166534;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main { margin-left: 0; }
+            .filters { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar - Reports active -->
+        <nav class="sidebar">
+            <div class="logo"><img style="width: 210px;" src="https://3655.efuserassets.com/3655/assets/logo/4c03a808-dbbd-8101-72cd-7c08a4448206.svg" alt=""></div>
+            <ul>
+<a href="./index.html">                <li>
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </li></a>
+                <li class="active">
+                    <i class="fas fa-file-alt"></i>
+                    Conversion Reports
+                </li>
+                <li>
+                    <a href="#"><i class="fas fa-chart-line"></i>
+                    Performance</a>
+                </li>
+                <li>
+                    <i class="fas fa-users"></i>
+                    Audience
+                </li>
+                <li>
+                    <i class="fas fa-cogs"></i>
+                    Assets
+                </li>
+                <li>
+      <a href="./pament.html">             <i class="fas fa-file-invoice-dollar"></i>
+                    Invoices
+                </li></a>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+    }
+
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header {
+      background: var(--card);
+      padding: 16px 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title { font-size: 1.4rem; font-weight: 600; }
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .date-group { display: flex; align-items: center; gap: 8px; }
+    input[type="date"] { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: var(--primary-dark); }
+    button.reset { background: #ef4444; }
+    button.reset:hover { background: #dc2626; }
+
+    .table-container {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { padding: 14px 16px; text-align: right; border-bottom: 1px solid var(--border); }
+    th:first-child, td:first-child { text-align: left; }
+    th { background: #f1f5f9; font-weight: 600; cursor: pointer; }
+    tr:hover { background: #f8fafc; }
+    .name { color: #2563eb; font-weight: 500; }
+    .earnings { color: #15803d; font-weight: 600; }
+    .empty { text-align: center; padding: 60px; color: var(--text-light); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="title">Smartlinks Statistics</div>
+    
+    <div class="controls">
+      <div class="date-group">
+        <label>From:</label>
+        <input type="date" id="startDate">
+      </div>
+      
+      <div class="date-group">
+        <label>To:</label>
+        <input type="date" id="endDate">
+      </div>
+
+      <button id="applyBtn">Apply</button>
+      <button class="reset" id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table id="statsTable">
+      <thead>
+        <tr>
+          <th data-sort="name">Name</th>
+          <th data-sort="country">Country</th>
+          <th data-sort="hits">Hits</th>
+          <th data-sort="uniques">Uniques</th>
+          <th data-sort="clicks">Clicks</th>
+          <th data-sort="conversions">Conversions</th>
+          <th data-sort="earnings">Earnings, $</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// Sample data — date string ফরম্যাটে রাখা হয়েছে (YYYY-MM-DD)
+const rawData = [
+  { name: "mmmx boss",         country: "Germany", hits: 236, uniques: 94,  clicks: 64, conversions: 6,  earnings: 25.28, date: "2026-02-03" },
+  { name: "BMW porlo ka",      country: "Germany", hits: 208, uniques: 49,  clicks: 41, conversions: 8,  earnings: 32.48, date: "2026-02-05" },
+  { name: "Snap Vasta Again",  country: "Germany", hits: 204, uniques: 133, clicks:112, conversions:19, earnings: 97.95, date: "2026-02-07" },
+  { name: "Sha 7stce_oooo",    country: "Germany", hits: 197, uniques: 70,  clicks: 61, conversions: 8,  earnings: 31.88, date: "2026-02-10" },
+  { name: "Bad Note11s",       country: "Germany", hits: 193, uniques: 73,  clicks: 54, conversions: 7,  earnings: 30.51, date: "2026-02-12" },
+  { name: "Spk Shamim Bro",    country: "Germany", hits: 180, uniques:118, clicks: 93, conversions:17, earnings: 74.36, date: "2026-02-14" },
+  { name: "Olvia 51",          country: "United States", hits:179, uniques:126, clicks:0, conversions:0, earnings:0.00, date: "2026-02-02" },
+  { name: "Bad hama1",         country: "Germany", hits: 177, uniques: 77,  clicks: 49, conversions: 6,  earnings: 31.18, date: "2026-02-18" },
+  { name: "Ap Shill X GF",     country: "Germany", hits: 175, uniques:100, clicks: 84, conversions:15, earnings: 69.83, date: "2026-02-20" },
+  { name: "Bad boy2",          country: "Germany", hits: 173, uniques: 82,  clicks: 59, conversions: 8,  earnings: 40.12, date: "2026-02-22" },
+  { name: "Rip King 69",       country: "France",  hits: 164, uniques: 65,  clicks: 46, conversions: 3,  earnings: 10.69, date: "2026-02-04" },
+  { name: "Bad_my-profile",    country: "Germany", hits: 163, uniques: 81,  clicks: 56, conversions: 6,  earnings: 32.63, date: "2026-02-25" },
+  { name: "Ap kobe porbe",     country: "France",  hits: 149, uniques: 65,  clicks: 42, conversions: 4,  earnings: 18.50, date: "2026-02-27" },
+  { name: "Rip King 69",       country: "Australia", hits:140, uniques:79, clicks:57, conversions:6, earnings: 22.40, date: "2026-02-28" },
+];
+
+// Elements
+const tableBody   = document.getElementById("tableBody");
+const applyBtn    = document.getElementById("applyBtn");
+const resetBtn    = document.getElementById("resetBtn");
+const startInput  = document.getElementById("startDate");
+const endInput    = document.getElementById("endDate");
+
+// Default date range (page load এ দেখাবে)
+startInput.value = "2026-02-01";
+endInput.value   = "2026-02-28";
+
+let sortColumn = "earnings";
+let sortDirection = "desc";
+
+// Table render function
+function renderTable(dataToShow) {
+  tableBody.innerHTML = "";
+
+  if (dataToShow.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="7" class="empty">No data in selected date range</td></tr>`;
+    return;
+  }
+
+  // Sorting
+  dataToShow.sort((a, b) => {
+    let valA = a[sortColumn] ?? 0;
+    let valB = b[sortColumn] ?? 0;
+
+    if (sortColumn === "name" || sortColumn === "country") {
+      valA = String(valA).toLowerCase();
+      valB = String(valB).toLowerCase();
+    }
+
+    if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+    if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  dataToShow.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="name">${row.name}</td>
+      <td>${row.country}</td>
+      <td>${row.hits}</td>
+      <td>${row.uniques}</td>
+      <td>${row.clicks}</td>
+      <td class="text-center">${row.conversions}</td>
+      <td class="earnings">${row.earnings?.toFixed(2) ?? "—"}</td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+// Filter & show data
+function applyFilter() {
+  const start = startInput.value ? new Date(startInput.value) : null;
+  const end   = endInput.value   ? new Date(endInput.value)   : null;
+
+  if (!start || !end) {
+    renderTable([...rawData]);
+    return;
+  }
+
+  // end date কে শেষ মুহূর্ত পর্যন্ত নেওয়ার জন্য
+  end.setHours(23,59,59,999);
+
+  const filtered = rawData.filter(item => {
+    const itemDate = new Date(item.date);
+    return itemDate >= start && itemDate <= end;
+  });
+
+  renderTable(filtered);
+}
+
+// Sorting click
+document.querySelectorAll("th[data-sort]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.sort;
+    if (sortColumn === col) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn = col;
+      sortDirection = "desc";
+    }
+    applyFilter();   // current filter এর উপরেই sort হবে
+  });
+});
+
+// Events
+applyBtn.addEventListener("click", applyFilter);
+
+resetBtn.addEventListener("click", () => {
+  startInput.value = "2026-02-01";
+  endInput.value   = "2026-02-28";
+  applyFilter();
+});
+
+// Page load এ default দেখাবে
+applyFilter();
+</script>
+         </main>   
+
+</div>
+</div>
+           
+        
+    
+    <style>
+        
+    </style>
+</body>
+</html>
